@@ -7,7 +7,7 @@ var (
 	colorPrimary = lipgloss.Color("#4A7C59") // Sage Green
 	colorMuted   = lipgloss.Color("#6B7280")
 	colorDim     = lipgloss.Color("#9CA3AF")
-	colorText    = lipgloss.Color("#1A1A1A")
+	colorText    = lipgloss.Color("#FFFFFF")
 	colorError   = lipgloss.Color("#DC2626")
 	colorSuccess = lipgloss.Color("#16A34A")
 

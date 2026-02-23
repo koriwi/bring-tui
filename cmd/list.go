@@ -35,14 +35,14 @@ var listCmd = &cobra.Command{
 			listName = "Shopping List"
 		}
 
-		if len(items.Items.Purchase) == 0 {
+		if len(items.Purchase) == 0 {
 			fmt.Printf("  %s is empty.\n", listName)
 			return nil
 		}
 
 		fmt.Printf("  %s\n", listName)
 		fmt.Println("  " + "────────────────────────────────")
-		for _, item := range items.Items.Purchase {
+		for _, item := range items.Purchase {
 			if item.Spec != "" {
 				fmt.Printf("  ● %s — %s\n", item.ItemID, item.Spec)
 			} else {
@@ -50,10 +50,10 @@ var listCmd = &cobra.Command{
 			}
 		}
 
-		if len(items.Items.Recently) > 0 {
+		if len(items.Recently) > 0 {
 			fmt.Println()
 			fmt.Println("  Recently bought:")
-			for _, item := range items.Items.Recently {
+			for _, item := range items.Recently {
 				fmt.Printf("  ✓ %s\n", item.ItemID)
 			}
 		}

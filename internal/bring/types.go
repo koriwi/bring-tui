@@ -44,21 +44,15 @@ type List struct {
 
 // ItemsResponse is returned from GET /v2/bringlists/{listUuid}
 type ItemsResponse struct {
-	UUID   string    `json:"uuid"`
-	Status string    `json:"status"`
-	Items  ItemGroup `json:"items"`
-}
-
-// ItemGroup contains active and recently bought items
-type ItemGroup struct {
+	UUID     string `json:"uuid"`
+	Status   string `json:"status"`
 	Purchase []Item `json:"purchase"`
 	Recently []Item `json:"recently"`
 }
 
 // Item represents a single shopping list item
 type Item struct {
-	UUID   string `json:"uuid"`
-	ItemID string `json:"itemId"`
+	ItemID string `json:"name"`
 	Spec   string `json:"specification"`
 }
 

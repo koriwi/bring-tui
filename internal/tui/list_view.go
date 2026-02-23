@@ -22,8 +22,8 @@ func newListView(resp *bring.ItemsResponse, listName string, width, height int) 
 		listName = "Shopping List"
 	}
 	return &listViewModel{
-		items:    resp.Items.Purchase,
-		recently: resp.Items.Recently,
+		items:    resp.Purchase,
+		recently: resp.Recently,
 		listName: listName,
 		cursor:   0,
 		width:    width,
