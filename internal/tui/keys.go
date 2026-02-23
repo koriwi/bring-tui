@@ -65,6 +65,7 @@ func helpBar() string {
 		{"a", "add"},
 		{"d", "done"},
 		{"x", "remove"},
+		{"enter", "re-add"},
 		{"l", "lists"},
 		{"r", "reload"},
 		{"q", "quit"},

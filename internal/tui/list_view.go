@@ -38,6 +38,25 @@ func (m *listViewModel) selectedItem() *bring.Item {
 	return &m.items[m.cursor]
 }
 
+func (m *listViewModel) selectedRecentlyItem() *bring.Item {
+	idx := m.cursor - len(m.items)
+	if idx < 0 || idx >= len(m.recently) {
+		return nil
+	}
+	return &m.recently[idx]
+}
+
+func (m *listViewModel) readdItem(itemID, spec string) {
+	for i, item := range m.recently {
+		if item.ItemID == itemID {
+			m.recently = append(m.recently[:i], m.recently[i+1:]...)
+			break
+		}
+	}
+	m.items = append([]bring.Item{{ItemID: itemID, Spec: spec}}, m.items...)
+	m.cursor = 0
+}
+
 func (m *listViewModel) removeItem(itemID string) {
 	for i, item := range m.items {
 		if item.ItemID == itemID {
@@ -57,13 +76,14 @@ func (m *listViewModel) addItem(itemID, spec string) {
 
 func (m *listViewModel) Update(msg tea.Msg) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		total := len(m.items) + len(m.recently)
 		switch {
 		case key.Matches(keyMsg, keys.Up):
 			if m.cursor > 0 {
 				m.cursor--
 			}
 		case key.Matches(keyMsg, keys.Down):
-			if m.cursor < len(m.items)-1 {
+			if m.cursor < total-1 {
 				m.cursor++
 			}
 		}
@@ -95,15 +115,13 @@ func (m *listViewModel) View() string {
 
 	if len(m.recently) > 0 {
 		s += "\n" + sectionStyle.Render("  ── recently bought ──") + "\n"
-		max := 5
-		if len(m.recently) < max {
-			max = len(m.recently)
-		}
-		for _, item := range m.recently[:max] {
-			s += doneItemStyle.Render(fmt.Sprintf("  ✓ %s", item.ItemID)) + "\n"
-		}
-		if len(m.recently) > 5 {
-			s += sectionStyle.Render(fmt.Sprintf("  ... and %d more", len(m.recently)-5)) + "\n"
+		for i, item := range m.recently {
+			recentlyIdx := len(m.items) + i
+			if m.cursor == recentlyIdx {
+				s += selectedItemStyle.Render(fmt.Sprintf("▸ ✓ %s", item.ItemID)) + "\n"
+			} else {
+				s += doneItemStyle.Render(fmt.Sprintf("  ✓ %s", item.ItemID)) + "\n"
+			}
 		}
 	}
 

@@ -242,6 +242,20 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
+		case keyMsg.String() == "enter":
+			if item := a.listView.selectedRecentlyItem(); item != nil {
+				itemName, spec := item.ItemID, item.Spec
+				a.listView.readdItem(itemName, spec)
+				a.status = fmt.Sprintf("Re-added: %s", itemName)
+				a.statusErr = false
+				return a, func() tea.Msg {
+					if err := a.client.AddItem(a.stored.DefaultListUUID, itemName, spec); err != nil {
+						return statusMsg{text: fmt.Sprintf("Error re-adding %s: %v", itemName, err), isError: true}
+					}
+					return nil
+				}
+			}
+
 		case keyMsg.String() == "l":
 			a.state = stateLoading
 			return a, tea.Batch(a.spinner.Tick, a.loadLists())
