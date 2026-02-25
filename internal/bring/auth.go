@@ -77,5 +77,24 @@ func loginAndStore(email, password string) (*Client, *config.StoredAuth, error) 
 	return newClientFromStored(stored), stored, nil
 }
 
+// RefreshStoredToken loads the stored auth, refreshes the access token, and saves it back.
+func RefreshStoredToken() error {
+	stored, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("no stored credentials: %w", err)
+	}
+	if stored.RefreshToken == "" {
+		return fmt.Errorf("no refresh token stored - please login first")
+	}
+	tokenResp, err := RefreshToken(stored.RefreshToken, stored.AccessToken, stored.UserUUID)
+	if err != nil {
+		return fmt.Errorf("refresh failed: %w", err)
+	}
+	stored.AccessToken = tokenResp.AccessToken
+	stored.RefreshToken = tokenResp.RefreshToken
+	stored.ExpiresAt = time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+	return config.Save(stored)
+}
+
 // ErrNeedsLogin indicates no stored credentials and no env vars
 var ErrNeedsLogin = fmt.Errorf("no credentials found - please login")
