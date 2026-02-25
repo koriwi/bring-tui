@@ -217,7 +217,7 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case keyMsg.String() == "d":
 			if item := a.listView.selectedItem(); item != nil {
 				itemName := item.ItemID
-				a.listView.removeItem(itemName)
+				a.listView.completeItem(itemName)
 				a.status = fmt.Sprintf("✓ %s", itemName)
 				a.statusErr = false
 				return a, func() tea.Msg {

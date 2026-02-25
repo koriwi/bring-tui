@@ -57,6 +57,19 @@ func (m *listViewModel) readdItem(itemID, spec string) {
 	m.cursor = 0
 }
 
+func (m *listViewModel) completeItem(itemID string) {
+	for i, item := range m.items {
+		if item.ItemID == itemID {
+			m.items = append(m.items[:i], m.items[i+1:]...)
+			if m.cursor >= len(m.items) && m.cursor > 0 {
+				m.cursor--
+			}
+			m.recently = append([]bring.Item{item}, m.recently...)
+			return
+		}
+	}
+}
+
 func (m *listViewModel) removeItem(itemID string) {
 	for i, item := range m.items {
 		if item.ItemID == itemID {
