@@ -27,7 +27,7 @@ var doneCmd = &cobra.Command{
 			return fmt.Errorf("no default list set")
 		}
 
-		if err := client.CompleteItem(listUUID, args[0]); err != nil {
+		if err := client.CompleteItem(listUUID, args[0], ""); err != nil {
 			return fmt.Errorf("failed to complete item: %w", err)
 		}
 

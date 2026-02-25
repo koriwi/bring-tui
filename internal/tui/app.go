@@ -230,12 +230,12 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case keyMsg.String() == "enter":
 			if item := a.listView.selectedItem(); item != nil {
-				itemName := item.ItemID
+				itemName, itemSpec := item.ItemID, item.Spec
 				a.listView.completeItem(itemName)
 				a.status = fmt.Sprintf("✓ %s", itemName)
 				a.statusErr = false
 				return a, func() tea.Msg {
-					if err := a.client.CompleteItem(a.stored.DefaultListUUID, itemName); err != nil {
+					if err := a.client.CompleteItem(a.stored.DefaultListUUID, itemName, itemSpec); err != nil {
 						return statusMsg{text: fmt.Sprintf("Error: %v", err), isError: true}
 					}
 					return nil

@@ -199,19 +199,48 @@ func (c *Client) UpdateItems(listUUID string, changes []Change) error {
 	return nil
 }
 
-// AddItem adds a single item to a shopping list
+// putForm sends a form-urlencoded PUT to the list endpoint
+func (c *Client) putForm(listUUID string, data url.Values) error {
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v2/bringlists/%s", BaseURL, listUUID), strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
+	}
+	c.setHeaders(req)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("request failed (status %d): %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+// AddItem adds a single item to a shopping list, with an optional spec set in a second call
 func (c *Client) AddItem(listUUID, itemName, spec string) error {
-	return c.UpdateItems(listUUID, []Change{{
-		ItemID:    itemName,
-		Spec:      spec,
-		Operation: OpToPurchase,
-	}})
+	data := url.Values{}
+	data.Set("uuid", listUUID)
+	data.Set("purchase", itemName)
+	if err := c.putForm(listUUID, data); err != nil {
+		return err
+	}
+	if spec != "" {
+		data.Set("specification", spec)
+		return c.putForm(listUUID, data)
+	}
+	return nil
 }
 
 // CompleteItem marks an item as recently bought
-func (c *Client) CompleteItem(listUUID, itemName string) error {
+func (c *Client) CompleteItem(listUUID, itemName, spec string) error {
 	return c.UpdateItems(listUUID, []Change{{
 		ItemID:    itemName,
+		Spec:      spec,
 		Operation: OpToRecently,
 	}})
 }
