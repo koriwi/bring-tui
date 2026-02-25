@@ -214,20 +214,6 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.addItem = newAddItem()
 			return a, a.addItem.Init()
 
-		case keyMsg.String() == "d":
-			if item := a.listView.selectedItem(); item != nil {
-				itemName := item.ItemID
-				a.listView.completeItem(itemName)
-				a.status = fmt.Sprintf("✓ %s", itemName)
-				a.statusErr = false
-				return a, func() tea.Msg {
-					if err := a.client.CompleteItem(a.stored.DefaultListUUID, itemName); err != nil {
-						return statusMsg{text: fmt.Sprintf("Error: %v", err), isError: true}
-					}
-					return nil
-				}
-			}
-
 		case keyMsg.String() == "x":
 			if item := a.listView.selectedItem(); item != nil {
 				itemName := item.ItemID
@@ -243,7 +229,18 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case keyMsg.String() == "enter":
-			if item := a.listView.selectedRecentlyItem(); item != nil {
+			if item := a.listView.selectedItem(); item != nil {
+				itemName := item.ItemID
+				a.listView.completeItem(itemName)
+				a.status = fmt.Sprintf("✓ %s", itemName)
+				a.statusErr = false
+				return a, func() tea.Msg {
+					if err := a.client.CompleteItem(a.stored.DefaultListUUID, itemName); err != nil {
+						return statusMsg{text: fmt.Sprintf("Error: %v", err), isError: true}
+					}
+					return nil
+				}
+			} else if item := a.listView.selectedRecentlyItem(); item != nil {
 				itemName, spec := item.ItemID, item.Spec
 				a.listView.readdItem(itemName, spec)
 				a.status = fmt.Sprintf("Re-added: %s", itemName)

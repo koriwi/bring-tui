@@ -30,8 +30,8 @@ var keys = keyMap{
 		key.WithHelp("a", "add"),
 	),
 	Done: key.NewBinding(
-		key.WithKeys("d", "enter"),
-		key.WithHelp("d", "done"),
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "done/re-add"),
 	),
 	Remove: key.NewBinding(
 		key.WithKeys("x", "delete"),
@@ -63,9 +63,8 @@ var keys = keyMap{
 func helpBar() string {
 	items := []struct{ key, desc string }{
 		{"a", "add"},
-		{"d", "done"},
+		{"enter", "done/re-add"},
 		{"x", "remove"},
-		{"enter", "re-add"},
 		{"l", "lists"},
 		{"r", "reload"},
 		{"q", "quit"},
