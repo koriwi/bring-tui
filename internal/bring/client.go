@@ -55,7 +55,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 
 	tokenResp, err := RefreshToken(c.refreshToken, c.accessToken, c.userUUID)
 	if err != nil {
-		return nil, fmt.Errorf("token refresh failed: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrAuthExpired, err)
 	}
 	c.accessToken = tokenResp.AccessToken
 	c.refreshToken = tokenResp.RefreshToken

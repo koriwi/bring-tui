@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -95,6 +96,9 @@ func (a *App) loadItems() tea.Cmd {
 	return func() tea.Msg {
 		items, err := a.client.GetItems(a.stored.DefaultListUUID)
 		if err != nil {
+			if errors.Is(err, bring.ErrAuthExpired) {
+				return authErrorMsg{err: err}
+			}
 			return itemsErrorMsg{err: err}
 		}
 		return itemsLoadedMsg{items: items}
@@ -105,10 +109,22 @@ func (a *App) loadLists() tea.Cmd {
 	return func() tea.Msg {
 		lists, err := a.client.GetLists()
 		if err != nil {
+			if errors.Is(err, bring.ErrAuthExpired) {
+				return authErrorMsg{err: err}
+			}
 			return itemsErrorMsg{err: err}
 		}
 		return listsLoadedMsg{lists: lists}
 	}
+}
+
+// apiErr converts an API error to the appropriate tea.Msg,
+// redirecting to the login screen if the session has expired.
+func apiErr(err error, msg string) tea.Msg {
+	if errors.Is(err, bring.ErrAuthExpired) {
+		return authErrorMsg{err: err}
+	}
+	return statusMsg{text: msg, isError: true}
 }
 
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -234,7 +250,7 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.statusErr = false
 				return a, func() tea.Msg {
 					if err := a.client.RemoveItem(a.stored.DefaultListUUID, itemName); err != nil {
-						return statusMsg{text: fmt.Sprintf("Error: %v", err), isError: true}
+						return apiErr(err, fmt.Sprintf("Error: %v", err))
 					}
 					return nil
 				}
@@ -248,7 +264,7 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.statusErr = false
 				return a, func() tea.Msg {
 					if err := a.client.CompleteItem(a.stored.DefaultListUUID, itemName, itemSpec); err != nil {
-						return statusMsg{text: fmt.Sprintf("Error: %v", err), isError: true}
+						return apiErr(err, fmt.Sprintf("Error: %v", err))
 					}
 					return nil
 				}
@@ -259,7 +275,7 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.statusErr = false
 				return a, func() tea.Msg {
 					if err := a.client.AddItem(a.stored.DefaultListUUID, itemName, spec); err != nil {
-						return statusMsg{text: fmt.Sprintf("Error re-adding %s: %v", itemName, err), isError: true}
+						return apiErr(err, fmt.Sprintf("Error re-adding %s: %v", itemName, err))
 					}
 					return nil
 				}
@@ -292,7 +308,7 @@ func (a *App) updateAddItem(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.statusErr = false
 		return a, func() tea.Msg {
 			if err := a.client.AddItem(a.stored.DefaultListUUID, item, spec); err != nil {
-				return statusMsg{text: fmt.Sprintf("Error adding %s: %v", item, err), isError: true}
+				return apiErr(err, fmt.Sprintf("Error adding %s: %v", item, err))
 			}
 			return nil
 		}
@@ -319,7 +335,7 @@ func (a *App) updateEditItem(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.statusErr = false
 		return a, func() tea.Msg {
 			if err := a.client.EditItem(a.stored.DefaultListUUID, oldName, newName, newSpec); err != nil {
-				return statusMsg{text: fmt.Sprintf("Error editing %s: %v", newName, err), isError: true}
+				return apiErr(err, fmt.Sprintf("Error editing %s: %v", newName, err))
 			}
 			return nil
 		}

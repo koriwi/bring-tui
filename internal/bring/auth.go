@@ -98,3 +98,6 @@ func RefreshStoredToken() error {
 
 // ErrNeedsLogin indicates no stored credentials and no env vars
 var ErrNeedsLogin = fmt.Errorf("no credentials found - please login")
+
+// ErrAuthExpired indicates the refresh token is no longer valid and re-login is required
+var ErrAuthExpired = fmt.Errorf("session expired - please login again")
