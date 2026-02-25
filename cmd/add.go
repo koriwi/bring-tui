@@ -13,12 +13,12 @@ func init() {
 }
 
 var addCmd = &cobra.Command{
-	Use:   "add <item> [description]",
+	Use:   "add <item>[:<description>]",
 	Short: "Add an item to your shopping list",
-	Long:  `Add an item to your default Bring! shopping list. Optionally include a description.`,
+	Long:  `Add an item to your default Bring! shopping list. Optionally include a description after a colon.`,
 	Example: `  bring add Milch
-  bring add Milch "1.5%, 2 Liter"
-  bring add Ketchup Frischkäse`,
+  bring add "Milch:1.5%, 2 Liter"
+  bring add Milch:1.5%`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, stored, err := bring.Authenticate()
@@ -26,11 +26,7 @@ var addCmd = &cobra.Command{
 			return fmt.Errorf("not logged in. Run 'bring login' first: %w", err)
 		}
 
-		item := args[0]
-		spec := ""
-		if len(args) > 1 {
-			spec = strings.Join(args[1:], " ")
-		}
+		item, spec, _ := strings.Cut(args[0], ":")
 
 		listUUID := stored.DefaultListUUID
 		if listUUID == "" {
