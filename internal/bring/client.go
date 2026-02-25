@@ -221,19 +221,15 @@ func (c *Client) putForm(listUUID string, data url.Values) error {
 	return nil
 }
 
-// AddItem adds a single item to a shopping list, with an optional spec set in a second call
+// AddItem adds a single item to a shopping list
 func (c *Client) AddItem(listUUID, itemName, spec string) error {
 	data := url.Values{}
 	data.Set("uuid", listUUID)
 	data.Set("purchase", itemName)
-	if err := c.putForm(listUUID, data); err != nil {
-		return err
-	}
 	if spec != "" {
 		data.Set("specification", spec)
-		return c.putForm(listUUID, data)
 	}
-	return nil
+	return c.putForm(listUUID, data)
 }
 
 // CompleteItem marks an item as recently bought
