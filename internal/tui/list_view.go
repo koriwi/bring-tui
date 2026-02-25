@@ -136,14 +136,20 @@ func (m *listViewModel) View() string {
 	}
 
 	if len(m.recently) > 0 {
-		s += "\n" + sectionStyle.Render("  ── recently bought ──") + "\n"
+		s += "\n" + sectionStyle.Render("── recently bought ──") + "\n"
 		for i, item := range m.recently {
 			recentlyIdx := len(m.items) + i
+			cursor := "  "
+			style := doneItemStyle
 			if m.cursor == recentlyIdx {
-				s += selectedItemStyle.Render(fmt.Sprintf("▸ ✓ %s", item.ItemID)) + "\n"
-			} else {
-				s += doneItemStyle.Render(fmt.Sprintf("  ✓ %s", item.ItemID)) + "\n"
+				cursor = "▸ "
+				style = selectedItemStyle
 			}
+			line := fmt.Sprintf("%s✓ %s", cursor, item.ItemID)
+			if item.Spec != "" {
+				line += " " + specStyle.Render("— "+item.Spec)
+			}
+			s += style.Render(line) + "\n"
 		}
 	}
 

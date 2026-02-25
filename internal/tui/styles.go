@@ -29,8 +29,7 @@ var (
 			Foreground(colorMuted)
 
 	doneItemStyle = lipgloss.NewStyle().
-			Foreground(colorDim).
-			Strikethrough(true)
+			Foreground(colorDim)
 
 	// Status bar
 	statusBarStyle = lipgloss.NewStyle().
