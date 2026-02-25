@@ -2,15 +2,17 @@ package bring
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/paulleonhardhellweg/bring-tui/internal/config"
 )
 
+
 // Authenticate resolves credentials in priority order:
 // 1. Environment variables (BRING_EMAIL + BRING_PASSWORD)
-// 2. Stored config with valid/refreshable token
+// 2. Stored config, always refreshing the token on startup
 // Returns (client, error). If no credentials found, returns ErrNeedsLogin.
 func Authenticate() (*Client, *config.StoredAuth, error) {
 	// 1. Try env vars
@@ -23,30 +25,28 @@ func Authenticate() (*Client, *config.StoredAuth, error) {
 	// 2. Try stored config
 	stored, err := config.Load()
 	if err == nil && stored.AccessToken != "" {
-		// Check if token is still valid (with 5 min buffer)
-		if time.Now().Before(stored.ExpiresAt.Add(-5 * time.Minute)) {
-			client := NewClient(stored.AccessToken, stored.UserUUID)
-			return client, stored, nil
-		}
-
-		// Try refresh
-		if stored.RefreshToken != "" {
-			tokenResp, err := RefreshToken(stored.RefreshToken, stored.AccessToken, stored.UserUUID)
-			if err == nil {
-				stored.AccessToken = tokenResp.AccessToken
-				stored.RefreshToken = tokenResp.RefreshToken
-				stored.ExpiresAt = time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
-				if err := config.Save(stored); err != nil {
-					return nil, nil, fmt.Errorf("failed to save refreshed token: %w", err)
-				}
-				client := NewClient(stored.AccessToken, stored.UserUUID)
-				return client, stored, nil
-			}
-		}
+		return newClientFromStored(stored), stored, nil
 	}
 
 	// 3. No credentials available
 	return nil, nil, ErrNeedsLogin
+}
+
+// newClientFromStored creates a Client wired up to persist token refreshes.
+func newClientFromStored(stored *config.StoredAuth) *Client {
+	c := &Client{
+		http:         &http.Client{Timeout: 10 * time.Second},
+		accessToken:  stored.AccessToken,
+		refreshToken: stored.RefreshToken,
+		userUUID:     stored.UserUUID,
+	}
+	c.onRefresh = func(accessToken, refreshToken string, expiresAt time.Time) error {
+		stored.AccessToken = accessToken
+		stored.RefreshToken = refreshToken
+		stored.ExpiresAt = expiresAt
+		return config.Save(stored)
+	}
+	return c
 }
 
 // LoginAndStore authenticates with email/password and persists the token
@@ -74,8 +74,7 @@ func loginAndStore(email, password string) (*Client, *config.StoredAuth, error) 
 		return nil, nil, fmt.Errorf("failed to save auth: %w", err)
 	}
 
-	client := NewClient(auth.AccessToken, auth.UUID)
-	return client, stored, nil
+	return newClientFromStored(stored), stored, nil
 }
 
 // ErrNeedsLogin indicates no stored credentials and no env vars

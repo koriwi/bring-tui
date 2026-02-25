@@ -13,9 +13,11 @@ import (
 
 // Client is the Bring! API client
 type Client struct {
-	http        *http.Client
-	accessToken string
-	userUUID    string
+	http         *http.Client
+	accessToken  string
+	refreshToken string
+	userUUID     string
+	onRefresh    func(accessToken, refreshToken string, expiresAt time.Time) error
 }
 
 // NewClient creates a new Bring! API client with auth credentials
@@ -38,6 +40,39 @@ func (c *Client) setHeaders(req *http.Request) {
 	if c.userUUID != "" {
 		req.Header.Set("X-BRING-USER-UUID", c.userUUID)
 	}
+}
+
+// do executes req and, on a 401, refreshes the token and retries once.
+func (c *Client) do(req *http.Request) (*http.Response, error) {
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusUnauthorized || c.refreshToken == "" {
+		return resp, nil
+	}
+	resp.Body.Close()
+
+	tokenResp, err := RefreshToken(c.refreshToken, c.accessToken, c.userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("token refresh failed: %w", err)
+	}
+	c.accessToken = tokenResp.AccessToken
+	c.refreshToken = tokenResp.RefreshToken
+	if c.onRefresh != nil {
+		expiresAt := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+		if err := c.onRefresh(tokenResp.AccessToken, tokenResp.RefreshToken, expiresAt); err != nil {
+			return nil, fmt.Errorf("failed to persist refreshed token: %w", err)
+		}
+	}
+	if req.GetBody != nil {
+		req.Body, err = req.GetBody()
+		if err != nil {
+			return nil, fmt.Errorf("failed to rebuild request body: %w", err)
+		}
+	}
+	req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	return c.http.Do(req)
 }
 
 // Login authenticates with email and password
@@ -124,7 +159,7 @@ func (c *Client) GetLists() ([]List, error) {
 	}
 	c.setHeaders(req)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return nil, fmt.Errorf("get lists failed: %w", err)
 	}
@@ -150,7 +185,7 @@ func (c *Client) GetItems(listUUID string) (*ItemsResponse, error) {
 	}
 	c.setHeaders(req)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return nil, fmt.Errorf("get items failed: %w", err)
 	}
@@ -186,7 +221,7 @@ func (c *Client) UpdateItems(listUUID string, changes []Change) error {
 	c.setHeaders(req)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return fmt.Errorf("update items failed: %w", err)
 	}
@@ -208,7 +243,7 @@ func (c *Client) putForm(listUUID string, data url.Values) error {
 	c.setHeaders(req)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
