@@ -7,13 +7,15 @@ import (
 )
 
 type addItemModel struct {
-	nameInput textinput.Model
-	specInput textinput.Model
-	focusName bool
-	itemName  string
-	spec      string
-	submitted bool
-	cancelled bool
+	nameInput    textinput.Model
+	specInput    textinput.Model
+	focusName    bool
+	itemName     string
+	spec         string
+	submitted    bool
+	cancelled    bool
+	title        string
+	originalName string
 }
 
 func newAddItem() *addItemModel {
@@ -30,6 +32,28 @@ func newAddItem() *addItemModel {
 		nameInput: name,
 		specInput: spec,
 		focusName: true,
+		title:     "Add Item",
+	}
+}
+
+func newEditItem(name, spec string) *addItemModel {
+	nameInput := textinput.New()
+	nameInput.Placeholder = "Item name (e.g. Milch)"
+	nameInput.SetValue(name)
+	nameInput.Focus()
+	nameInput.CharLimit = 100
+
+	specInput := textinput.New()
+	specInput.Placeholder = "Description (optional, e.g. 1.5%)"
+	specInput.SetValue(spec)
+	specInput.CharLimit = 200
+
+	return &addItemModel{
+		nameInput:    nameInput,
+		specInput:    specInput,
+		focusName:    true,
+		title:        "Edit Item",
+		originalName: name,
 	}
 }
 
@@ -90,7 +114,7 @@ func (m *addItemModel) Update(msg tea.Msg) (*addItemModel, tea.Cmd) {
 }
 
 func (m *addItemModel) View() string {
-	s := "\n" + titleStyle.Render("Add Item") + "\n\n"
+	s := "\n" + titleStyle.Render(m.title) + "\n\n"
 	s += "  Item:  " + m.nameInput.View() + "\n"
 	s += "  Desc:  " + m.specInput.View() + "\n\n"
 	s += helpDescStyle.Render("  Tab: switch field · Enter: confirm · Esc: cancel") + "\n"

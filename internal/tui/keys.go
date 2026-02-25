@@ -6,6 +6,7 @@ type keyMap struct {
 	Up       key.Binding
 	Down     key.Binding
 	Add      key.Binding
+	Edit     key.Binding
 	Done     key.Binding
 	Remove   key.Binding
 	Lists    key.Binding
@@ -28,6 +29,10 @@ var keys = keyMap{
 	Add: key.NewBinding(
 		key.WithKeys("a"),
 		key.WithHelp("a", "add"),
+	),
+	Edit: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "edit"),
 	),
 	Done: key.NewBinding(
 		key.WithKeys("enter"),
@@ -63,6 +68,7 @@ var keys = keyMap{
 func helpBar() string {
 	items := []struct{ key, desc string }{
 		{"a", "add"},
+		{"e", "edit"},
 		{"enter", "done/re-add"},
 		{"x", "remove"},
 		{"l", "lists"},

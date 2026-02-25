@@ -17,6 +17,7 @@ const (
 	stateLogin
 	stateList
 	stateAddItem
+	stateEditItem
 	stateListPicker
 )
 
@@ -56,6 +57,7 @@ type App struct {
 	stored     *config.StoredAuth
 	listView   *listViewModel
 	addItem    *addItemModel
+	editItem   *addItemModel
 	loginView  *loginViewModel
 	listPicker *listPickerModel
 	status     string
@@ -173,6 +175,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stateAddItem:
 		return a.updateAddItem(msg)
 
+	case stateEditItem:
+		return a.updateEditItem(msg)
+
 	case stateListPicker:
 		return a.updateListPicker(msg)
 	}
@@ -213,6 +218,13 @@ func (a *App) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.state = stateAddItem
 			a.addItem = newAddItem()
 			return a, a.addItem.Init()
+
+		case keyMsg.String() == "e":
+			if item := a.listView.selectedItem(); item != nil {
+				a.state = stateEditItem
+				a.editItem = newEditItem(item.ItemID, item.Spec)
+				return a, a.editItem.Init()
+			}
 
 		case keyMsg.String() == "x":
 			if item := a.listView.selectedItem(); item != nil {
@@ -294,6 +306,33 @@ func (a *App) updateAddItem(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
+func (a *App) updateEditItem(msg tea.Msg) (tea.Model, tea.Cmd) {
+	result, cmd := a.editItem.Update(msg)
+	a.editItem = result
+
+	if a.editItem.submitted {
+		oldName := a.editItem.originalName
+		newName, newSpec := a.editItem.itemName, a.editItem.spec
+		a.state = stateList
+		a.listView.updateItem(oldName, newName, newSpec)
+		a.status = fmt.Sprintf("Updated: %s", newName)
+		a.statusErr = false
+		return a, func() tea.Msg {
+			if err := a.client.EditItem(a.stored.DefaultListUUID, oldName, newName, newSpec); err != nil {
+				return statusMsg{text: fmt.Sprintf("Error editing %s: %v", newName, err), isError: true}
+			}
+			return nil
+		}
+	}
+
+	if a.editItem.cancelled {
+		a.state = stateList
+		return a, nil
+	}
+
+	return a, cmd
+}
+
 func (a *App) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	result, cmd := a.listPicker.Update(msg)
 	a.listPicker = result
@@ -340,6 +379,9 @@ func (a *App) View() string {
 
 	case stateAddItem:
 		return a.addItem.View()
+
+	case stateEditItem:
+		return a.editItem.View()
 
 	case stateListPicker:
 		return a.listPicker.View()

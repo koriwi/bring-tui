@@ -241,6 +241,16 @@ func (c *Client) CompleteItem(listUUID, itemName, spec string) error {
 	}})
 }
 
+// EditItem updates an item's name and/or spec on a shopping list
+func (c *Client) EditItem(listUUID, oldName, newName, spec string) error {
+	if oldName != newName {
+		if err := c.RemoveItem(listUUID, oldName); err != nil {
+			return err
+		}
+	}
+	return c.AddItem(listUUID, newName, spec)
+}
+
 // RemoveItem removes an item from a shopping list
 func (c *Client) RemoveItem(listUUID, itemName string) error {
 	return c.UpdateItems(listUUID, []Change{{

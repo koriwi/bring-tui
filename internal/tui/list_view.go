@@ -87,6 +87,15 @@ func (m *listViewModel) addItem(itemID, spec string) {
 	m.cursor = 0
 }
 
+func (m *listViewModel) updateItem(oldID, newID, spec string) {
+	for i, item := range m.items {
+		if item.ItemID == oldID {
+			m.items[i] = bring.Item{ItemID: newID, Spec: spec}
+			return
+		}
+	}
+}
+
 func (m *listViewModel) Update(msg tea.Msg) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		total := len(m.items) + len(m.recently)
