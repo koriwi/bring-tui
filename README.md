@@ -1,4 +1,4 @@
-# bring-tui
+# bring-tui (MOSTLY VIBE CODED, YOU HAVE BEEN WARNED)
 
 A terminal UI and CLI for the [Bring!](https://www.getbring.com/) shopping list app.
 
