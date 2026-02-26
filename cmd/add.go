@@ -26,7 +26,9 @@ var addCmd = &cobra.Command{
 			return fmt.Errorf("not logged in. Run 'bring login' first: %w", err)
 		}
 
-		item, spec, _ := strings.Cut(args[0], ":")
+		item, spec, _ := strings.Cut(strings.Join(args, " "), ":")
+		item = strings.TrimSpace(item)
+		spec = strings.TrimSpace(spec)
 
 		listUUID := stored.DefaultListUUID
 		if listUUID == "" {
